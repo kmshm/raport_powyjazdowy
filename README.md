@@ -11,7 +11,7 @@ Desktopowa aplikacja Python do tworzenia raportów powyjazdowych z pomiarów czu
 
 ```bash
 # 1. Sklonuj repozytorium
-git clone https://github.com/YOUR_USER/raport_powyjazdowy.git
+git clone https://github.com/kmshm/raport_powyjazdowy.git
 cd raport_powyjazdowy
 
 # 2. (Opcjonalnie) Utwórz wirtualne środowisko
