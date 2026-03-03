@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wsl -e bash -c \"cd /home/kmak/Python/git/raport_powyjazdowy && git rm --cached logo.png 2>/dev/null || true && git add -A\")"
+    ]
+  }
+}
