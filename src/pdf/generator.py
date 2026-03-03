@@ -22,6 +22,70 @@ from reportlab.platypus import (
     KeepTogether,
 )
 from reportlab.platypus.flowables import Flowable
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+# ── Font registration (Unicode support for Polish characters) ─────────────────
+_FONT_DIRS = [
+    "/usr/share/fonts/truetype/dejavu",
+    "/usr/share/fonts/truetype/liberation",
+    "/System/Library/Fonts",
+    "C:/Windows/Fonts",
+]
+
+def _find_font(filename: str) -> str | None:
+    for d in _FONT_DIRS:
+        p = os.path.join(d, filename)
+        if os.path.exists(p):
+            return p
+    return None
+
+def _register_fonts():
+    """Register DejaVu Sans (or fallback) for Unicode / Polish character support."""
+    candidates = [
+        ("DejaVuSans",       "DejaVuSans.ttf"),
+        ("DejaVuSans-Bold",  "DejaVuSans-Bold.ttf"),
+        ("LiberationSans",   "LiberationSans-Regular.ttf"),
+        ("LiberationSans-Bold", "LiberationSans-Bold.ttf"),
+    ]
+    registered: dict[str, str] = {}
+    for name, fname in candidates:
+        path = _find_font(fname)
+        if path:
+            try:
+                pdfmetrics.registerFont(TTFont(name, path))
+                registered[name] = name
+            except Exception:
+                pass
+
+    # Register font families so <b> tags in Paragraphs work with TTFont
+    if "DejaVuSans" in registered and "DejaVuSans-Bold" in registered:
+        pdfmetrics.registerFontFamily(
+            "DejaVuSans",
+            normal="DejaVuSans",
+            bold="DejaVuSans-Bold",
+        )
+    if "LiberationSans" in registered and "LiberationSans-Bold" in registered:
+        pdfmetrics.registerFontFamily(
+            "LiberationSans",
+            normal="LiberationSans",
+            bold="LiberationSans-Bold",
+        )
+    return registered
+
+_REGISTERED = _register_fonts()
+
+# Choose the best available font family
+if "DejaVuSans" in _REGISTERED:
+    _FONT_NORMAL = "DejaVuSans"
+    _FONT_BOLD   = _REGISTERED.get("DejaVuSans-Bold", "DejaVuSans")
+elif "LiberationSans" in _REGISTERED:
+    _FONT_NORMAL = "LiberationSans"
+    _FONT_BOLD   = _REGISTERED.get("LiberationSans-Bold", "LiberationSans")
+else:
+    # Fallback to built-in (Polish diacritics may not render)
+    _FONT_NORMAL = "Helvetica"
+    _FONT_BOLD   = "Helvetica-Bold"
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 PAGE_W, PAGE_H = A4
@@ -78,7 +142,7 @@ def _draw_header(canvas, doc):
 
     # Report title text
     canvas.setFillColor(colors.white)
-    canvas.setFont("Helvetica-Bold", 12)
+    canvas.setFont(_FONT_BOLD, 12)
     title = doc.report_title if hasattr(doc, "report_title") else "Raport Powyjazdowy"
     canvas.drawRightString(PAGE_W - MARGIN_R, PAGE_H - HEADER_H / 2 - 5, title)
 
@@ -89,7 +153,7 @@ def _draw_footer(canvas, doc):
     canvas.saveState()
     canvas.setFillColor(BORDER)
     canvas.rect(MARGIN_L, MARGIN_B - 4 * mm, CONTENT_W, 0.3 * mm, fill=1, stroke=0)
-    canvas.setFont("Helvetica", 8)
+    canvas.setFont(_FONT_NORMAL, 8)
     canvas.setFillColor(GREY)
     canvas.drawRightString(
         PAGE_W - MARGIN_R,
@@ -112,14 +176,14 @@ def _build_styles():
 
     styles["h1"] = ParagraphStyle(
         "h1",
-        fontName="Helvetica-Bold",
+        fontName=_FONT_BOLD,
         fontSize=14,
         textColor=NAVY,
         spaceAfter=4,
     )
     styles["h2"] = ParagraphStyle(
         "h2",
-        fontName="Helvetica-Bold",
+        fontName=_FONT_BOLD,
         fontSize=11,
         textColor=NAVY,
         spaceBefore=8,
@@ -128,7 +192,7 @@ def _build_styles():
     )
     styles["h3"] = ParagraphStyle(
         "h3",
-        fontName="Helvetica-Bold",
+        fontName=_FONT_BOLD,
         fontSize=10,
         textColor=GREY,
         spaceBefore=6,
@@ -136,7 +200,7 @@ def _build_styles():
     )
     styles["body"] = ParagraphStyle(
         "body",
-        fontName="Helvetica",
+        fontName=_FONT_NORMAL,
         fontSize=9,
         textColor=TEXT,
         leading=13,
@@ -144,21 +208,21 @@ def _build_styles():
     )
     styles["label"] = ParagraphStyle(
         "label",
-        fontName="Helvetica-Bold",
+        fontName=_FONT_BOLD,
         fontSize=8,
         textColor=GREY,
         spaceAfter=1,
     )
     styles["value"] = ParagraphStyle(
         "value",
-        fontName="Helvetica",
+        fontName=_FONT_NORMAL,
         fontSize=9,
         textColor=TEXT,
         spaceAfter=4,
     )
     styles["small"] = ParagraphStyle(
         "small",
-        fontName="Helvetica",
+        fontName=_FONT_NORMAL,
         fontSize=8,
         textColor=GREY,
         spaceAfter=2,
