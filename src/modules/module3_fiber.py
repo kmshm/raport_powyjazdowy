@@ -105,11 +105,8 @@ class SensorRow(QWidget):
         outer.addWidget(sep)
 
     def _pick_image(self):
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Wybierz zdjecie", "",
-            "Obrazy (*.png *.jpg *.jpeg *.bmp *.tiff)",
-            options=QFileDialog.Option.DontUseNativeDialog,
-        )
+        from src.utils.dialogs import open_image_dialog
+        path = open_image_dialog(self)
         if path:
             self._image_path = path
             px = QPixmap(path).scaled(

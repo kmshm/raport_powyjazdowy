@@ -8,7 +8,7 @@ from datetime import date
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QLabel, QScrollArea, QFileDialog, QMessageBox, QFrame,
+    QLabel, QScrollArea, QMessageBox, QFrame,
     QStatusBar, QApplication, QSizePolicy
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -57,8 +57,11 @@ class PdfWorker(QThread):
 class AppHeader(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(64)
-        self.setStyleSheet(f"background: {HEADER_BG};")
+        self.setFixedHeight(68)
+        # White background with red bottom border
+        self.setStyleSheet(
+            "QWidget { background: #FFFFFF; border-bottom: 2px solid #E31E25; }"
+        )
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(20, 0, 20, 0)
@@ -66,34 +69,43 @@ class AppHeader(QWidget):
 
         # Logo
         logo_lbl = QLabel()
-        logo_lbl.setFixedSize(44, 44)
+        logo_lbl.setFixedHeight(48)
+        logo_lbl.setMaximumWidth(160)
+        logo_lbl.setStyleSheet("border: none; background: transparent;")
         if os.path.exists(LOGO_PATH):
-            px = QPixmap(LOGO_PATH).scaled(
-                44, 44,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
+            px = QPixmap(LOGO_PATH).scaledToHeight(
+                48, Qt.TransformationMode.SmoothTransformation
             )
             logo_lbl.setPixmap(px)
         else:
-            logo_lbl.setText("●")
-            logo_lbl.setStyleSheet("color: white; font-size: 28pt;")
-        logo_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            logo_lbl.setText("SHM")
+            logo_lbl.setStyleSheet(
+                f"color: {PRIMARY}; font-size: 18pt; font-weight: 700; border: none;"
+            )
+        logo_lbl.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(logo_lbl)
+
+        # Vertical separator
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.VLine)
+        sep.setFixedHeight(36)
+        sep.setStyleSheet(f"background: #E0E0E0; border: none; max-width: 1px;")
+        layout.addWidget(sep)
 
         # Title
         title = QLabel("Raport Powyjazdowy")
         title.setFont(QFont(FONT_FAMILY, FONT_SIZE_H1, QFont.Weight.Bold))
-        title.setStyleSheet(f"color: {HEADER_FG};")
+        title.setStyleSheet(f"color: {TEXT}; border: none; background: transparent;")
         layout.addWidget(title)
 
         layout.addStretch()
 
         # Action buttons
         for text, obj_name, tooltip in [
-            ("Nowy raport",     "new_btn",    "Wyczyść wszystkie pola"),
-            ("Importuj PDF",    "import_btn", "Wczytaj raport z pliku PDF"),
-            ("Podgląd PDF",     "preview_btn","Podgląd przed wygenerowaniem"),
-            ("Generuj PDF",     "generate_btn","Wygeneruj i zapisz raport PDF"),
+            ("Nowy raport",  "new_btn",     "Wyczysc wszystkie pola"),
+            ("Importuj PDF", "import_btn",  "Wczytaj raport z pliku PDF"),
+            ("Podglad PDF",  "preview_btn", "Podglad przed wygenerowaniem"),
+            ("Generuj PDF",  "generate_btn","Wygeneruj i zapisz raport PDF"),
         ]:
             btn = QPushButton(text)
             btn.setObjectName(obj_name)
@@ -108,13 +120,12 @@ class AppHeader(QWidget):
             return (
                 f"QPushButton {{ background: {PRIMARY}; color: white; "
                 f"border: none; border-radius: 6px; padding: 8px 18px; font-weight: 600; }}"
-                f"QPushButton:hover {{ background: #1E429F; }}"
+                f"QPushButton:hover {{ background: #C41920; }}"
             )
         return (
-            "QPushButton { background: rgba(255,255,255,0.12); color: white; "
-            "border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; "
-            "padding: 7px 14px; }"
-            "QPushButton:hover { background: rgba(255,255,255,0.22); }"
+            f"QPushButton {{ background: #F4F4F4; color: {TEXT}; "
+            f"border: 1px solid #E0E0E0; border-radius: 6px; padding: 7px 14px; }}"
+            f"QPushButton:hover {{ background: #EBEBEB; }}"
         )
 
 
@@ -202,10 +213,8 @@ class MainWindow(QMainWindow):
     # ── Slot: Import PDF ──────────────────────────────────────────────────────
 
     def _on_import(self):
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Importuj raport PDF", "", "Pliki PDF (*.pdf)",
-            options=QFileDialog.Option.DontUseNativeDialog,
-        )
+        from src.utils.dialogs import open_pdf_dialog
+        path = open_pdf_dialog(self)
         if not path:
             return
         try:
@@ -252,12 +261,8 @@ class MainWindow(QMainWindow):
             return
 
         filename = build_filename(self._collect_module1_data())
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Zapisz raport PDF",
-            os.path.join(os.path.expanduser("~"), "Desktop", filename),
-            "Pliki PDF (*.pdf)",
-            options=QFileDialog.Option.DontUseNativeDialog,
-        )
+        from src.utils.dialogs import save_pdf_dialog
+        path = save_pdf_dialog(self, default_name=filename)
         if not path:
             return
         self._generate(path, open_after=False)

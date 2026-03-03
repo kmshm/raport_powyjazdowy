@@ -8,7 +8,7 @@ import os
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit,
     QPushButton, QLabel, QFrame, QTableWidget, QTableWidgetItem,
-    QHeaderView, QFileDialog
+    QHeaderView,
 )
 from PyQt6.QtCore import Qt
 
@@ -40,11 +40,8 @@ class ImageListWidget(QWidget):
     def _add_image(self, path: str = ""):
         # path="" means open file dialog; path is explicit when loading saved data
         if not isinstance(path, str) or not path:
-            path, _ = QFileDialog.getOpenFileName(
-                self, "Wybierz zdjecie", "",
-                "Obrazy (*.png *.jpg *.jpeg *.bmp *.tiff)",
-                options=QFileDialog.Option.DontUseNativeDialog,
-            )
+            from src.utils.dialogs import open_image_dialog
+            path = open_image_dialog(self)
         if not path:
             return
         self._paths.append(path)

@@ -124,29 +124,38 @@ class ColoredHR(HRFlowable):
 
 def _draw_header(canvas, doc):
     canvas.saveState()
-    # Background bar
-    canvas.setFillColor(NAVY)
+
+    # White background
+    canvas.setFillColor(colors.white)
     canvas.rect(0, PAGE_H - HEADER_H, PAGE_W, HEADER_H, fill=1, stroke=0)
 
-    # Logo
+    # Logo (left-aligned, vertically centred in header area above the red line)
     logo_path = LOGO_PATH
+    logo_area_top    = PAGE_H - HEADER_H + 2 * mm   # 2mm gap from header bottom
+    logo_area_height = HEADER_H - 4 * mm            # leave 2mm on each side
     if os.path.exists(logo_path):
         try:
-            logo_w, logo_h = 40 * mm, 14 * mm
             canvas.drawImage(
                 logo_path,
-                MARGIN_L, PAGE_H - HEADER_H + (HEADER_H - logo_h) / 2,
-                width=logo_w, height=logo_h,
+                MARGIN_L, logo_area_top,
+                width=50 * mm, height=logo_area_height,
                 preserveAspectRatio=True, mask="auto",
             )
         except Exception:
-            pass  # logo not renderable — skip silently
+            pass
 
-    # Report title text
-    canvas.setFillColor(colors.white)
-    canvas.setFont(_FONT_BOLD, 12)
-    title = doc.report_title if hasattr(doc, "report_title") else "Raport Powyjazdowy"
-    canvas.drawRightString(PAGE_W - MARGIN_R, PAGE_H - HEADER_H / 2 - 5, title)
+    # Title text: right-aligned, vertically centred
+    title = getattr(doc, "report_title", "Raport Powyjazdowy")
+    report_date = getattr(doc, "report_date", "")
+    full_title = f"{title}  |  {report_date}" if report_date else title
+    canvas.setFillColor(DARK)
+    canvas.setFont(_FONT_BOLD, 10)
+    text_y = PAGE_H - HEADER_H / 2 - 4   # approximate vertical centre
+    canvas.drawRightString(PAGE_W - MARGIN_R, text_y, full_title)
+
+    # Red rule at the bottom edge of the header
+    canvas.setFillColor(RED)
+    canvas.rect(0, PAGE_H - HEADER_H, PAGE_W, 2, fill=1, stroke=0)
 
     canvas.restoreState()
 
@@ -290,11 +299,17 @@ def _kv_table(pairs: list[tuple[str, str]], styles: dict, cols: int = 2) -> Tabl
         data.append(value_row)
 
     t = Table(data, colWidths=[col_w] * cols)
-    t.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-        ("TOPPADDING", (0, 0), (-1, -1), 2),
-    ]))
+    style_cmds = [
+        ("VALIGN",         (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING",     (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING",  (0, 0), (-1, -1), 2),
+        ("LEFTPADDING",    (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING",   (0, 0), (-1, -1), 4),
+    ]
+    # Thin bottom border under each label row (even rows: 0, 2, 4 …)
+    for r in range(0, len(data), 2):
+        style_cmds.append(("LINEBELOW", (0, r), (-1, r), 0.5, BORDER))
+    t.setStyle(TableStyle(style_cmds))
     return t
 
 
@@ -585,6 +600,13 @@ def generate_pdf(all_data: dict, output_path: str) -> None:
     project_name = module1_data.get("project_name", "")
     report_title = f"Raport Powyjazdowy — {project_number}" if project_number else "Raport Powyjazdowy"
 
+    # Build dates string for header
+    measurement_dates = module1_data.get("measurement_dates", [])
+    dates_str = ", ".join(
+        d.strftime("%d.%m.%Y") if isinstance(d, date) else str(d)
+        for d in measurement_dates
+    )
+
     frame = Frame(MARGIN_L, MARGIN_B, CONTENT_W, PAGE_H - MARGIN_T - MARGIN_B,
                   id="main", leftPadding=0, rightPadding=0,
                   topPadding=0, bottomPadding=0)
@@ -600,6 +622,7 @@ def generate_pdf(all_data: dict, output_path: str) -> None:
         pageTemplates=[page_template],
     )
     doc.report_title = report_title
+    doc.report_date  = dates_str
 
     flowables = []
 
