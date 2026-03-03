@@ -107,13 +107,14 @@ class Module5Inventory(BaseModule):
 
     def _pick_image(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Wybierz zdjęcie", "",
-            "Obrazy (*.png *.jpg *.jpeg *.bmp *.tiff)"
+            self, "Wybierz zdjecie", "",
+            "Obrazy (*.png *.jpg *.jpeg *.bmp *.tiff)",
+            options=QFileDialog.Option.DontUseNativeDialog,
         )
         if path:
             self._image_path = path
             name = os.path.basename(path)
-            self._img_label.setText(f"✓ {name}")
+            self._img_label.setText(f"  {name}")
             self._img_label.setStyleSheet("color: #0E9F6E; font-size: 9pt;")
 
     # ── Data interface ────────────────────────────────────────────────────────

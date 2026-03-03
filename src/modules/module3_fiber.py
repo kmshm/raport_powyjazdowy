@@ -106,8 +106,9 @@ class SensorRow(QWidget):
 
     def _pick_image(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Wybierz zdjęcie", "",
-            "Obrazy (*.png *.jpg *.jpeg *.bmp *.tiff *.svg)"
+            self, "Wybierz zdjecie", "",
+            "Obrazy (*.png *.jpg *.jpeg *.bmp *.tiff)",
+            options=QFileDialog.Option.DontUseNativeDialog,
         )
         if path:
             self._image_path = path

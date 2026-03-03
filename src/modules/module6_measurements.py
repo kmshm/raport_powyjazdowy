@@ -30,33 +30,37 @@ class ImageListWidget(QWidget):
         self._list_layout.setSpacing(2)
         layout.addLayout(self._list_layout)
 
-        add_btn = QPushButton("+ Dodaj zdjęcie")
+        add_btn = QPushButton("+ Dodaj zdjecie")
         add_btn.setObjectName("small")
-        add_btn.setMaximumWidth(150)
-        add_btn.clicked.connect(self._add_image)
+        add_btn.setMaximumWidth(160)
+        # Lambda prevents bool from clicked(bool) being passed as path
+        add_btn.clicked.connect(lambda: self._add_image(""))
         layout.addWidget(add_btn)
 
     def _add_image(self, path: str = ""):
-        if not path:
+        # path="" means open file dialog; path is explicit when loading saved data
+        if not isinstance(path, str) or not path:
             path, _ = QFileDialog.getOpenFileName(
-                self, "Wybierz zdjęcie", "",
-                "Obrazy (*.png *.jpg *.jpeg *.bmp *.tiff)"
+                self, "Wybierz zdjecie", "",
+                "Obrazy (*.png *.jpg *.jpeg *.bmp *.tiff)",
+                options=QFileDialog.Option.DontUseNativeDialog,
             )
         if not path:
             return
         self._paths.append(path)
         row = QHBoxLayout()
-        lbl = QLabel(f"✓ {os.path.basename(path)}")
+        lbl = QLabel(f"  {os.path.basename(path)}")
         lbl.setStyleSheet(f"color: #0E9F6E; font-size: {FONT_SIZE_SM}pt;")
         lbl.setToolTip(path)
-        rm = QPushButton("✕")
+        rm = QPushButton("Usun")
         rm.setObjectName("small")
-        rm.setFixedSize(22, 22)
+        rm.setMinimumWidth(50)
         rm.setStyleSheet(
-            "QPushButton { background: #FEE2E2; color: #DC2626; "
-            "border: 1px solid #FECACA; border-radius: 3px; font-weight:700;}"
+            "QPushButton { background: #FDECEA; color: #C41920; "
+            "border: 1px solid #F5C6C5; border-radius: 3px; padding: 2px 6px;}"
+            "QPushButton:hover { background: #FAD4D2; }"
         )
-        rm.clicked.connect(lambda _, p=path, r=row, l=lbl, rb=rm: self._remove(p, r))
+        rm.clicked.connect(lambda: self._remove(path, row))
         row.addWidget(lbl)
         row.addWidget(rm)
         row.addStretch()

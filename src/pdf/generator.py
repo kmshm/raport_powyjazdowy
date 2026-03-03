@@ -98,13 +98,15 @@ CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R
 HEADER_H = 22 * mm
 FOOTER_H = 10 * mm
 
-BLUE   = colors.HexColor("#1A56DB")
-NAVY   = colors.HexColor("#1E3A5F")
-LIGHT  = colors.HexColor("#F3F4F6")
-BORDER = colors.HexColor("#E5E7EB")
-GREEN  = colors.HexColor("#0E9F6E")
-TEXT   = colors.HexColor("#111827")
-GREY   = colors.HexColor("#6B7280")
+# Colors matching company logo palette: charcoal #2B2A28 + red #E31E25
+RED    = colors.HexColor("#E31E25")   # primary / headings underline
+DARK   = colors.HexColor("#2B2A28")   # header background (charcoal)
+NAVY   = colors.HexColor("#2B2A28")   # kept as alias for compat
+BLUE   = colors.HexColor("#E31E25")   # section heading accent line
+LIGHT  = colors.HexColor("#F4F4F4")   # section heading background
+BORDER = colors.HexColor("#E0E0E0")
+TEXT   = colors.HexColor("#2B2A28")   # body text (charcoal)
+GREY   = colors.HexColor("#6B6B69")
 RED    = colors.HexColor("#DC2626")
 
 LOGO_PATH = os.path.join(

@@ -64,26 +64,28 @@ class ChecklistGroup(QWidget):
         add_btn = QPushButton("+ Dodaj własny sprzęt")
         add_btn.setObjectName("small")
         add_btn.setMaximumWidth(180)
-        add_btn.clicked.connect(self._add_custom)
+        # Use lambda to avoid clicked(bool) being passed as text argument
+        add_btn.clicked.connect(lambda: self._add_custom(""))
         layout.addWidget(add_btn)
 
     def _add_custom(self, text: str = ""):
         row = QHBoxLayout()
         edit = QLineEdit()
-        edit.setPlaceholderText("Nazwa sprzętu…")
-        edit.setText(text)
+        edit.setPlaceholderText("Nazwa sprzętu...")
+        if isinstance(text, str):
+            edit.setText(text)
         self._custom_edits.append(edit)
         row.addWidget(edit)
 
-        rm = QPushButton("✕")
+        rm = QPushButton("Usuń")
         rm.setObjectName("small")
-        rm.setFixedSize(26, 26)
+        rm.setMinimumWidth(50)
         rm.setStyleSheet(
-            "QPushButton { background: #FEE2E2; color: #DC2626; "
-            "border: 1px solid #FECACA; border-radius: 4px; font-weight:700;}"
-            "QPushButton:hover { background: #FCA5A5; }"
+            "QPushButton { background: #FDECEA; color: #C41920; "
+            "border: 1px solid #F5C6C5; border-radius: 4px; padding: 2px 8px;}"
+            "QPushButton:hover { background: #FAD4D2; }"
         )
-        rm.clicked.connect(lambda _, e=edit, r=row: self._remove_custom(e, r))
+        rm.clicked.connect(lambda: self._remove_custom(edit, row))
         row.addWidget(rm)
         row.addStretch()
         self._custom_container.addLayout(row)
@@ -91,6 +93,7 @@ class ChecklistGroup(QWidget):
     def _remove_custom(self, edit: QLineEdit, row: QHBoxLayout):
         if edit in self._custom_edits:
             self._custom_edits.remove(edit)
+        # Remove all widgets from the row
         while row.count():
             item = row.takeAt(0)
             if item.widget():

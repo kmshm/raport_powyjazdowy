@@ -203,7 +203,8 @@ class MainWindow(QMainWindow):
 
     def _on_import(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Importuj raport PDF", "", "Pliki PDF (*.pdf)"
+            self, "Importuj raport PDF", "", "Pliki PDF (*.pdf)",
+            options=QFileDialog.Option.DontUseNativeDialog,
         )
         if not path:
             return
@@ -255,6 +256,7 @@ class MainWindow(QMainWindow):
             self, "Zapisz raport PDF",
             os.path.join(os.path.expanduser("~"), "Desktop", filename),
             "Pliki PDF (*.pdf)",
+            options=QFileDialog.Option.DontUseNativeDialog,
         )
         if not path:
             return

@@ -1,30 +1,69 @@
 """
-Module 1 — General Information (always active).
+Module 1 - General Information (always active).
+Improved layout: grouped sections with background cards, clear label/value contrast.
 """
 from datetime import date
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit,
-    QDateEdit, QPushButton, QLabel, QFrame, QScrollArea
+    QDateEdit, QPushButton, QLabel, QFrame,
 )
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QFont
 
 from src.modules.base_module import BaseModule
-from src.theme import BORDER, PRIMARY, TEXT_SEC, BG_INPUT, FONT_FAMILY, FONT_SIZE_SM
+from src.theme import (
+    BORDER, PRIMARY, TEXT, TEXT_SEC, BG, BG_CARD,
+    FONT_FAMILY, FONT_SIZE_SM, FONT_SIZE_H3,
+)
+
+_REMOVE_BTN_STYLE = (
+    "QPushButton { background: #FDECEA; color: #C41920; "
+    "border: 1px solid #F5C6C5; border-radius: 4px; "
+    "font-size: 8pt; padding: 2px 10px; min-width: 52px;}"
+    "QPushButton:hover { background: #FAD4D2; }"
+)
+
+
+def _section_card(title: str) -> tuple[QWidget, QVBoxLayout]:
+    """Returns a light-background card widget + its inner layout."""
+    card = QWidget()
+    card.setStyleSheet(
+        f"background: {BG}; border-radius: 7px; border: 1px solid {BORDER};"
+    )
+    outer = QVBoxLayout(card)
+    outer.setContentsMargins(14, 10, 14, 12)
+    outer.setSpacing(10)
+
+    hdr = QLabel(title.upper())
+    hdr.setStyleSheet(
+        f"color: {TEXT_SEC}; font-size: {FONT_SIZE_SM - 1}pt; font-weight: 700; "
+        f"letter-spacing: 1px; border: none; background: transparent;"
+    )
+    outer.addWidget(hdr)
+
+    sep = QFrame()
+    sep.setFrameShape(QFrame.Shape.HLine)
+    sep.setStyleSheet(f"background: {BORDER}; border: none; min-height: 1px; max-height: 1px;")
+    outer.addWidget(sep)
+
+    return card, outer
 
 
 class Module1Info(BaseModule):
     MODULE_ID = 1
-    MODULE_TITLE = "Informacje Ogólne"
+    MODULE_TITLE = "Informacje Ogolne"
     ALWAYS_ON = True
 
     def _build_content(self, container: QWidget):
         layout = container.layout()
+        layout.setSpacing(10)
 
-        # ── Row 1: Project number + Project name ──────────────────────────────
+        # ── Section 1: Project identity ───────────────────────────────────────
+        proj_card, proj_layout = _section_card("Projekt")
+
         row1 = QHBoxLayout()
-        row1.setSpacing(12)
+        row1.setSpacing(14)
 
         self.project_number = QLineEdit()
         self.project_number.setPlaceholderText("np. 2024/001")
@@ -32,87 +71,98 @@ class Module1Info(BaseModule):
         row1.addLayout(self.field_row("Numer projektu", self.project_number, required=True))
 
         self.project_name = QLineEdit()
-        self.project_name.setPlaceholderText("Nazwa projektu")
-        row1.addLayout(self.field_row("Nazwa projektu", self.project_name))
-        layout.addLayout(row1)
+        self.project_name.setPlaceholderText("Pelna nazwa projektu lub obiektu")
+        row1.addLayout(self.field_row("Nazwa projektu", self.project_name), 2)
+        proj_layout.addLayout(row1)
 
-        # ── Row 2: Initials + Report date ────────────────────────────────────
         row2 = QHBoxLayout()
-        row2.setSpacing(12)
+        row2.setSpacing(14)
 
         self.initials = QLineEdit()
         self.initials.setPlaceholderText("np. JK")
-        self.initials.setMaximumWidth(120)
+        self.initials.setMaximumWidth(110)
         self.initials.setProperty("required", "true")
-        row2.addLayout(self.field_row("Inicjały wypełniającego", self.initials, required=True))
+        row2.addLayout(self.field_row("Inicjaly wypelniajacego", self.initials, required=True))
 
         self.report_date = QDateEdit()
         self.report_date.setCalendarPopup(True)
         self.report_date.setDate(QDate.currentDate())
-        self.report_date.setMaximumWidth(160)
-        row2.addLayout(self.field_row("Data wypełnienia raportu", self.report_date))
+        self.report_date.setMaximumWidth(170)
+        row2.addLayout(self.field_row("Data wypelnienia raportu", self.report_date))
         row2.addStretch()
-        layout.addLayout(row2)
+        proj_layout.addLayout(row2)
+        layout.addWidget(proj_card)
 
-        # ── Location ─────────────────────────────────────────────────────────
+        # ── Section 2: Location ───────────────────────────────────────────────
+        loc_card, loc_layout = _section_card("Lokalizacja")
+
         self.location = QLineEdit()
-        self.location.setPlaceholderText("Adres obiektu")
-        layout.addLayout(self.field_row("Lokalizacja", self.location))
+        self.location.setPlaceholderText("Adres obiektu, miejscowosc, kraj")
+        loc_layout.addLayout(self.field_row("Adres", self.location))
 
         self.maps_link = QLineEdit()
         self.maps_link.setPlaceholderText("https://maps.google.com/...")
-        layout.addLayout(self.field_row("Link Google Maps", self.maps_link))
+        loc_layout.addLayout(self.field_row("Link Google Maps", self.maps_link))
+        layout.addWidget(loc_card)
 
-        # ── Measurement dates ─────────────────────────────────────────────────
-        layout.addWidget(self.make_label("Daty pomiarów", required=True))
+        # ── Section 3: Measurement dates ──────────────────────────────────────
+        dates_card, dates_layout = _section_card("Daty pomiarow  *")
+
         self._dates_container = QVBoxLayout()
         self._dates_container.setSpacing(6)
         self._date_pickers: list[QDateEdit] = []
-        layout.addLayout(self._dates_container)
-        self._add_date_picker()  # start with one
+        dates_layout.addLayout(self._dates_container)
+        self._add_date_picker()
 
-        add_date_btn = QPushButton("+ Dodaj dzień")
+        add_date_btn = QPushButton("+ Dodaj dzien")
         add_date_btn.setObjectName("small")
         add_date_btn.setMaximumWidth(130)
         add_date_btn.clicked.connect(self._add_date_picker)
-        layout.addWidget(add_date_btn)
+        dates_layout.addWidget(add_date_btn)
+        layout.addWidget(dates_card)
 
-        # ── Measurement team ─────────────────────────────────────────────────
+        # ── Section 4: Team ───────────────────────────────────────────────────
+        team_card, team_layout = _section_card("Zespol pomiarowy")
+
         self.team_leader = QLineEdit()
-        self.team_leader.setPlaceholderText("Imię i nazwisko")
-        layout.addLayout(self.field_row("Kierownik pomiarów", self.team_leader))
+        self.team_leader.setPlaceholderText("Imie i nazwisko kierownika")
+        team_layout.addLayout(self.field_row("Kierownik pomiarow", self.team_leader))
 
         self.team_members = QTextEdit()
-        self.team_members.setPlaceholderText("Imię i Nazwisko, stanowisko — po jednym na linię")
-        self.team_members.setFixedHeight(70)
-        layout.addLayout(self.field_row("Skład zespołu pomiarowego", self.team_members))
+        self.team_members.setPlaceholderText(
+            "Imie i Nazwisko, stanowisko\nKolejny czlonek zespolu..."
+        )
+        self.team_members.setFixedHeight(72)
+        team_layout.addLayout(self.field_row("Sklad zespolu pomiarowego", self.team_members))
+        layout.addWidget(team_card)
 
-        # ── Contact person ────────────────────────────────────────────────────
-        layout.addWidget(self._section_divider("Osoba do kontaktu"))
+        # ── Section 5: Contact person ─────────────────────────────────────────
+        contact_card, contact_layout = _section_card("Osoba do kontaktu")
 
         contact_row1 = QHBoxLayout()
-        contact_row1.setSpacing(12)
+        contact_row1.setSpacing(14)
         self.contact_title = QLineEdit()
-        self.contact_title.setPlaceholderText("np. dr inż.")
-        self.contact_title.setMaximumWidth(110)
-        contact_row1.addLayout(self.field_row("Tytuł", self.contact_title))
+        self.contact_title.setPlaceholderText("np. dr inz.")
+        self.contact_title.setMaximumWidth(120)
+        contact_row1.addLayout(self.field_row("Tytul naukowy", self.contact_title))
         self.contact_first = QLineEdit()
-        self.contact_first.setPlaceholderText("Imię")
-        contact_row1.addLayout(self.field_row("Imię", self.contact_first))
+        self.contact_first.setPlaceholderText("Imie")
+        contact_row1.addLayout(self.field_row("Imie", self.contact_first))
         self.contact_last = QLineEdit()
         self.contact_last.setPlaceholderText("Nazwisko")
         contact_row1.addLayout(self.field_row("Nazwisko", self.contact_last))
-        layout.addLayout(contact_row1)
+        contact_layout.addLayout(contact_row1)
 
         contact_row2 = QHBoxLayout()
-        contact_row2.setSpacing(12)
+        contact_row2.setSpacing(14)
         self.contact_phone = QLineEdit()
         self.contact_phone.setPlaceholderText("+48 000 000 000")
         contact_row2.addLayout(self.field_row("Telefon", self.contact_phone))
         self.contact_email = QLineEdit()
         self.contact_email.setPlaceholderText("email@example.com")
         contact_row2.addLayout(self.field_row("E-mail", self.contact_email))
-        layout.addLayout(contact_row2)
+        contact_layout.addLayout(contact_row2)
+        layout.addWidget(contact_card)
 
     # ── Date picker helpers ───────────────────────────────────────────────────
 
@@ -122,20 +172,14 @@ class Module1Info(BaseModule):
         dp = QDateEdit()
         dp.setCalendarPopup(True)
         dp.setDate(QDate.currentDate())
-        dp.setMaximumWidth(160)
+        dp.setMaximumWidth(170)
         self._date_pickers.append(dp)
         row.addWidget(dp)
 
         if len(self._date_pickers) > 1:
-            remove_btn = QPushButton("✕")
-            remove_btn.setObjectName("small")
-            remove_btn.setFixedSize(26, 26)
-            remove_btn.setStyleSheet(
-                "QPushButton { background: #FEE2E2; color: #DC2626; "
-                "border: 1px solid #FECACA; border-radius: 4px; font-weight:700;}"
-                "QPushButton:hover { background: #FCA5A5; }"
-            )
-            remove_btn.clicked.connect(lambda _, d=dp, r=row: self._remove_date(d, r))
+            remove_btn = QPushButton("Usun")
+            remove_btn.setStyleSheet(_REMOVE_BTN_STYLE)
+            remove_btn.clicked.connect(lambda: self._remove_date(dp, row))
             row.addWidget(remove_btn)
 
         row.addStretch()
@@ -148,48 +192,30 @@ class Module1Info(BaseModule):
             item = row_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-        # Remove the empty layout from parent
         parent = self._dates_container
         for i in range(parent.count()):
-            if parent.itemAt(i) == row_layout or parent.itemAt(i).layout() is row_layout:
+            if parent.itemAt(i).layout() is row_layout:
                 parent.removeItem(parent.itemAt(i))
                 break
-
-    @staticmethod
-    def _section_divider(title: str) -> QWidget:
-        w = QWidget()
-        h = QHBoxLayout(w)
-        h.setContentsMargins(0, 8, 0, 4)
-        h.setSpacing(8)
-        lbl = QLabel(title)
-        lbl.setStyleSheet(
-            f"color: {TEXT_SEC}; font-size: {FONT_SIZE_SM}pt; font-weight: 600;"
-        )
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setStyleSheet(f"color: {BORDER}; background: {BORDER};")
-        h.addWidget(lbl)
-        h.addWidget(line, 1)
-        return w
 
     # ── Data interface ────────────────────────────────────────────────────────
 
     def get_data(self) -> dict:
         return {
-            "project_number":   self.project_number.text().strip(),
-            "project_name":     self.project_name.text().strip(),
-            "initials":         self.initials.text().strip(),
-            "report_date":      self.report_date.date().toPyDate(),
-            "location":         self.location.text().strip(),
-            "maps_link":        self.maps_link.text().strip(),
+            "project_number":    self.project_number.text().strip(),
+            "project_name":      self.project_name.text().strip(),
+            "initials":          self.initials.text().strip(),
+            "report_date":       self.report_date.date().toPyDate(),
+            "location":          self.location.text().strip(),
+            "maps_link":         self.maps_link.text().strip(),
             "measurement_dates": [dp.date().toPyDate() for dp in self._date_pickers],
-            "team_leader":      self.team_leader.text().strip(),
-            "team_members":     self.team_members.toPlainText().strip(),
-            "contact_title":    self.contact_title.text().strip(),
-            "contact_first":    self.contact_first.text().strip(),
-            "contact_last":     self.contact_last.text().strip(),
-            "contact_phone":    self.contact_phone.text().strip(),
-            "contact_email":    self.contact_email.text().strip(),
+            "team_leader":       self.team_leader.text().strip(),
+            "team_members":      self.team_members.toPlainText().strip(),
+            "contact_title":     self.contact_title.text().strip(),
+            "contact_first":     self.contact_first.text().strip(),
+            "contact_last":      self.contact_last.text().strip(),
+            "contact_phone":     self.contact_phone.text().strip(),
+            "contact_email":     self.contact_email.text().strip(),
         }
 
     def set_data(self, data: dict):
@@ -208,7 +234,6 @@ class Module1Info(BaseModule):
         self.maps_link.setText(data.get("maps_link", ""))
 
         dates = data.get("measurement_dates") or []
-        # Clear existing pickers beyond the first
         while len(self._date_pickers) > 1:
             self._date_pickers[-1].deleteLater()
             self._date_pickers.pop()

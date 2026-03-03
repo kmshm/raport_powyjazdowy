@@ -42,13 +42,16 @@ class PackingItem(QWidget):
         self.edit.setPlaceholderText("Pozycja na liście…")
         row.addWidget(self.edit, 1)
 
-        rm_btn = QPushButton("✕")
-        rm_btn.setFixedSize(24, 24)
+        rm_btn = QPushButton("Usun")
+        rm_btn.setMinimumWidth(52)
+        rm_btn.setFixedHeight(26)
         rm_btn.setStyleSheet(
-            "QPushButton { background: #FEE2E2; color: #DC2626; "
-            "border: 1px solid #FECACA; border-radius: 4px; font-weight: 700;}"
-            "QPushButton:hover { background: #FCA5A5; }"
+            "QPushButton { background: #FDECEA; color: #C41920; "
+            "border: 1px solid #F5C6C5; border-radius: 4px; "
+            "font-size: 8pt; padding: 2px 6px;}"
+            "QPushButton:hover { background: #FAD4D2; }"
         )
+        rm_btn.setToolTip("Usun z listy")
         rm_btn.clicked.connect(lambda: self._on_remove(self))
         row.addWidget(rm_btn)
 
